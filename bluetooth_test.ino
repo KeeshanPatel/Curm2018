@@ -5,7 +5,7 @@ char val; // variable to receive data from the serial port
 int ledpin = 13; // LED connected to pin 48 (on-board LED)
 Servo myservo;  // create servo object to control a servo
 
-SoftwareSerial mySerial(10, 11); 
+SoftwareSerial mySerial(10, 11); // RX, TX
 void setup() {
   pinMode(ledpin, OUTPUT);  // pin 48 (on-board LED) as OUTPUT
   Serial.begin(9600);       // start serial communication at 9600bps
