@@ -15,13 +15,13 @@
  */
 #include <SoftwareSerial.h>
 #include <Servo.h>
-char val; // variable to receive data from the serial port
-int ledpin = 13; // LED connected to pin 48 (on-board LED)
+//char val; // variable to receive data from the serial port
+//sint ledpin = 13; // LED connected to pin 48 (on-board LED)
 Servo myservo;  // create servo object to control a servo
 Servo mainMotor; // main motor to power locomotion for the hovercraft.
 SoftwareSerial mySerial(10, 11); 
 void setup() {
-  pinMode(ledpin, OUTPUT);  // pin 48 (on-board LED) as OUTPUT
+//  pinMode(ledpin, OUTPUT);  // pin 48 (on-board LED) as OUTPUT
   Serial.begin(9600);       // start serial communication at 9600bps
     mySerial.begin(9600);
     myservo.attach(9);  // attaches the servo on pin 9 to the servo object
@@ -33,43 +33,51 @@ void setup() {
     Serial.println("Ready to Receive");
 }
 void loop() {
+  boolean isRight=false; boolean isLeft = false;
     if (mySerial.available()) {
       int input = mySerial.read();
       Serial.write(input);
       switch(input){
         case 1:
+          if(isLeft)
+            break;
           Serial.println("Shifting for Left in Loop");
-          reset();
-          myservo.write((45)); 
+         // Serial.println("isLeft" + isLeft + " isRight + isRight);
+          shiftLeft();
+          isLeft = true; isRight = false;
           break;
         case 2:
-          Serial.println("Shifting for Right in Loop");
           reset();
           moveForward();
           break;
         case 3:
-        reset();
-        myservo.write(-45);
-        break;
+        Serial.println("Shifting for Right in Loop");
+        if(isRight)
+            break;
+          shiftRight();
+            isLeft = false; isRight = true;
+          break;
         default:
-        Serial.println("No known command entered through bluetooth while in loop function.");
-        break;
+         Serial.println("No known command entered through bluetooth while in loop function.");
+         break;
       }
       delay(1); //for stablity
   }
-  if (Serial.available()) {
-    digitalWrite(ledpin,HIGH);
-    delay(300);
-    digitalWrite(ledpin,LOW);
-    mySerial.write(Serial.read());
-  }
+//  if (Serial.available()) {
+//    digitalWrite(ledpin,HIGH);
+//    delay(300);
+//    digitalWrite(ledpin,LOW);
+//    mySerial.write(Serial.read());
+//  }
 }
 void moveForward(){
+  boolean isLeft = false; boolean isRight = false;
   Serial.println("Starting moveForward for Hovercraft.");
   for(int x =1;x<=130;x++){
     mainMotor.write(x);    //gradually increase the speed of the motor to prvent intertia breaking the body!
     delay(20); //delay 20 ms 
   }
+  if (mySerial.available()){
   int input = mySerial.read();
   boolean stopFlag = false;
   while(true){
@@ -79,32 +87,53 @@ void moveForward(){
         break;
       case 10: //move left
         Serial.println("Shifting for Left in moveForward");
-        reset(); 
-        myservo.write((45)); 
-        stopFlag = false;
+        if(isLeft)
+          break;
+        shiftLeft();
+        stopFlag = false;isLeft = true; isRight = false;
         break;
       case 12:
         Serial.println("Shifting for Right in moveForward");
+        if(isRight)
+          break;
         stopFlag = false;
-        reset();
-        myservo.write(-45);
+        shiftRight();
+        isLeft = false; isRight = true;
         break;
-        default:
-        Serial.println("No known command entered through bluetooth while in moveForward function.");
-        break;
+//        default:
+//          Serial.println("No known command entered through bluetooth while in moveForward function.");
+//         // stopFlag = false; isLeft = false; isRight = false;
+//          break;
      }
       delay(1); //for stablity
-     if(stopFlag)
-      break;
+      if(stopFlag)
+        break;
+  }
   }
     for(int x =mainMotor.read();x>0;x--){
     mainMotor.write(x);    //gradually decrease the speed of the motor to prvent momentum breaking the body!
-    delay(2); //delay 20 ms 
+    delay(1); //delay 1ms
   }
   Serial.println("Completed Stop for HoverBoard.");
     return;
 }
 void reset(){
   myservo.write(0);//move it back to 0
+}
+void shiftLeft(){
+  reset();
+  for(int x = 1;x<46;x++){
+    myservo.write(x);
+    delay(1); //stablize the shift
+  }
+  return;
+}
+void shiftRight(){
+    reset();
+  for(int x = 0;x>-46;x--){
+    myservo.write(x);
+    delay(1); //stablize the shift
+  }
+  return;
 }
 
