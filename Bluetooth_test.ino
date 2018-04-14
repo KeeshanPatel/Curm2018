@@ -26,8 +26,8 @@ void setup() {
     mySerial.begin(9600);
     myservo.attach(9);  // attaches the servo on pin 9 to the servo object
     //setup the main motor.
-    mainMotor.attach(12);  //Specify here the pin number on which the signal pin of ESC is connected.
-    mainMotor.write(30);   //ESC arm command. ESCs won't start unless input speed is less during initialization.
+    mainMotor.attach(6);  //Specify here the pin number on which the signal pin of ESC is connected.
+    //mainMotor.write(30);   //ESC arm command. ESCs won't start unless input speed is less during initialization.
     delay(3000);            //ESC initialization delay.
     //end with setup, let the user know
     reset();
@@ -47,7 +47,7 @@ void loop() {
           isLeft = true; isRight = false;
           break;
         case 2:
-          reset();
+         // reset();
           moveForward();
           break;
         case 3:
@@ -56,6 +56,9 @@ void loop() {
             break;
         shiftRight();
         break;
+        case 5:
+          myservo.write(55);
+          break;
         default:
         Serial.println("No known command entered through bluetooth while in loop function.");
         break;
@@ -73,25 +76,26 @@ void moveForward(){
   boolean isLeft = false; 
   boolean isRight = false;
   Serial.println("Starting moveForward for Hovercraft.");
-  for(int x =1;x<=130;x++){
-    mainMotor.write(x);    //gradually increase the speed of the motor to prvent intertia breaking the body!
-    delay(20); //delay 20 ms 
-  }
+  runMotor();
    boolean stopFlag = false;
    while(true){
     if (mySerial.available()) {
       int input = mySerial.read();
       Serial.write(input);
       switch(input){
-      case 0xB: //stop the forward motion
+      case 0xB:
+        myservo.write(55);break;
+      case 0x8: //stop the forward motion
         stopFlag = true;
-        Serial.println("Here");
         break;
       case 0xA: //move left
         Serial.println("Shifting for Left in moveForward");
         if(isLeft)
           break;
+      //  runMotor();
         shiftLeft();
+        //runMotor();
+        runMotor();
         stopFlag = false;isLeft = true; isRight = false;
         break;
       case 0xC:
@@ -100,6 +104,8 @@ void moveForward(){
           break;
         stopFlag = false;
         shiftRight();
+        runMotor();
+        runMotor();
         isLeft = false; isRight = true;
         break;
         default:
@@ -111,10 +117,11 @@ void moveForward(){
       if(stopFlag){
         for(int x =mainMotor.read();x>0;x--){
         mainMotor.write(x);    //gradually decrease the speed of the motor to prvent momentum breaking the body!
-        delay(2); //delay 20 ms
+        delay(1); //delay 20 ms
+        }
         Serial.println("Completed Stop for HoverBoard.");
         return;
-      }
+      
   }
   
      
@@ -122,23 +129,25 @@ void moveForward(){
    }
 }
 void reset(){
-  myservo.write(0);//move it back to 0
+  myservo.write(55);//move it back to 0
+  mainMotor.write(30);
 }
 void shiftLeft(){
-  reset();
-  for(int x = 1;x<46;x++){
-    myservo.write(x);
-    delay(1); //stablize the shift
-  }
+ // reset();
+  myservo.write(115);
   return;
 }
 void shiftRight(){
-    reset();
-  for(int x = 0;x>-46;x--){
-    myservo.write(x);
-    delay(1); //stablize the shift
-  }
+   // reset();
+  myservo.write(0);
   return;
+}
+void runMotor(){
+//for(int x =1;x<=130;x++){
+//    mainMotor.write(x);    //gradually increase the speed of the motor to prvent intertia breaking the body!
+//    delay(2); //delay 20 ms 
+//  }
+mainMotor.write(130);
 }
 
 
